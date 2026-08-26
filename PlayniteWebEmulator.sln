@@ -1,0 +1,31 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayniteWebEmulator", "src\PlayniteWebEmulator\PlayniteWebEmulator.csproj", "{BA76D4BA-CA46-4520-8AEE-3F5A9F204AAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayniteWebEmulator.Launcher", "src\PlayniteWebEmulator.Launcher\PlayniteWebEmulator.Launcher.csproj", "{887717A0-53EE-46AA-B30F-CAC209BF76B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayniteWebEmulator.Tests", "tests\PlayniteWebEmulator.Tests\PlayniteWebEmulator.Tests.csproj", "{4A246FA6-FCC8-4CE8-8A96-247E4090CBFA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA76D4BA-CA46-4520-8AEE-3F5A9F204AAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA76D4BA-CA46-4520-8AEE-3F5A9F204AAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA76D4BA-CA46-4520-8AEE-3F5A9F204AAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA76D4BA-CA46-4520-8AEE-3F5A9F204AAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{887717A0-53EE-46AA-B30F-CAC209BF76B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{887717A0-53EE-46AA-B30F-CAC209BF76B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{887717A0-53EE-46AA-B30F-CAC209BF76B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{887717A0-53EE-46AA-B30F-CAC209BF76B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A246FA6-FCC8-4CE8-8A96-247E4090CBFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A246FA6-FCC8-4CE8-8A96-247E4090CBFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A246FA6-FCC8-4CE8-8A96-247E4090CBFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A246FA6-FCC8-4CE8-8A96-247E4090CBFA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
+

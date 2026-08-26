@@ -1,0 +1,10 @@
+Id: 41d5bc40-a7e8-46a6-888e-d52cf719c397
+Name: Web Emulator
+Author: GreenFuze
+Version: 0.1.0
+Module: PlayniteWebEmulator.dll
+Type: GenericPlugin
+Links:
+  - Name: Source code
+    Url: https://github.com/GreenFuze/PlayniteWebEmulator
+

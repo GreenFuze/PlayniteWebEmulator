@@ -1,0 +1,19 @@
+Web Emulator for Playnite
+Copyright 2026 GreenFuze and contributors
+
+This project is licensed under the Apache License, Version 2.0.
+See LICENSE for the full license text.
+
+Web Emulator reimplements browser-emulation integration designs from
+MyGamesAnywhere (MGA), Copyright 2026 GreenFuze and contributors. MGA is
+licensed under the Apache License, Version 2.0. Its source is available at:
+https://github.com/GreenFuze/MyGamesAnywhere
+
+Web Emulator compiles against the Playnite SDK (MIT License, Copyright 2020
+Josef Nemec). The Playnite SDK runtime assembly is not redistributed in the
+extension package.
+
+The emulator engines are independent third-party works downloaded on demand.
+They are not covered by this project's Apache-2.0 license. See
+THIRD_PARTY_NOTICES.md for credits, source links, and license boundaries.
+
