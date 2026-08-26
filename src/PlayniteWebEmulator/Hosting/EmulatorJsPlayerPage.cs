@@ -20,11 +20,8 @@ namespace PlayniteWebEmulator.Hosting
                 "</style></head><body><div id=\"game\"></div><div id=\"failure\"></div><script>" +
                 "function report(event,detail){var beacon=new Image();beacon.src='./diagnostics?event='+encodeURIComponent(event)+'&detail='+encodeURIComponent(detail||'')+'&nonce='+Date.now();}" +
                 "var nativeFetch=window.fetch.bind(window);window.fetch=function(input,init){var target=String(input);if(target==='https://cdn.emulatorjs.org/stable/data/version.json'){input='./runtime/version.json';target=String(input);}return nativeFetch(input,init).catch(function(error){report('fetch-error',target+': '+String(error&&error.message||error));throw error;});};" +
-                "var playniteFullscreenTarget=null;function setPlayniteFullscreen(enabled,target){var previous=playniteFullscreenTarget;playniteFullscreenTarget=enabled?(target||document.getElementById('game')):null;report('fullscreen',enabled?'enter':'exit');var changed=playniteFullscreenTarget||previous;if(changed){changed.dispatchEvent(new Event('fullscreenchange',{bubbles:true}));}return Promise.resolve();}" +
-                "Element.prototype.requestFullscreen=function(){return setPlayniteFullscreen(true,this);};Element.prototype.webkitRequestFullscreen=Element.prototype.requestFullscreen;" +
-                "document.exitFullscreen=function(){return setPlayniteFullscreen(false,playniteFullscreenTarget);};document.webkitExitFullscreen=document.exitFullscreen;" +
-                "try{Object.defineProperty(document,'fullscreenElement',{configurable:true,get:function(){return playniteFullscreenTarget;}});}catch(ignore){}" +
-                "window.addEventListener('keydown',function(event){if(event.key==='F11'){event.preventDefault();setPlayniteFullscreen(!playniteFullscreenTarget,document.getElementById('game'));}else if(event.key==='Escape'&&playniteFullscreenTarget){event.preventDefault();setPlayniteFullscreen(false,playniteFullscreenTarget);}},true);" +
+                "var sessionClosing=false;function closeSession(){if(sessionClosing)return;sessionClosing=true;navigator.sendBeacon('./diagnostics?event=closed&detail=Browser+tab+closed','');}" +
+                "window.addEventListener('pagehide',closeSession);window.addEventListener('beforeunload',closeSession);setInterval(function(){report('heartbeat','');},5000);" +
                 "window.addEventListener('error',function(event){var detail=event.message||'unknown browser error';var box=document.getElementById('failure');box.style.display='grid';box.textContent='EmulatorJS failed: '+detail;report('error',detail);});" +
                 "window.addEventListener('unhandledrejection',function(event){var detail=String(event.reason&&event.reason.message||event.reason||'unknown rejected promise');report('rejection',detail);});" +
                 "window.EJS_player='#game';" +
@@ -33,7 +30,7 @@ namespace PlayniteWebEmulator.Hosting
                 $"window.EJS_gameName='{JavaScript(gameName)}';" +
                 $"window.EJS_controlScheme='{JavaScript(profile.ControlSchemeId)}';" +
                 "window.EJS_pathtodata='./runtime/';" +
-                "window.EJS_startOnLoaded=true;window.EJS_fullscreenOnLoaded=false;window.EJS_disableAutoLang=false;window.EJS_threads=false;window.EJS_DEBUG_XX=false;" +
+                "window.EJS_startOnLoaded=true;window.EJS_fullscreenOnLoaded=false;window.EJS_disableAutoLang=false;window.EJS_threads=true;window.EJS_DEBUG_XX=false;" +
                 "window.EJS_ready=function(){report('ready','EmulatorJS player is ready');};" +
                 "window.EJS_onGameStart=function(){report('started','Emulation started');};" +
                 "report('page','Player page loaded');" +

@@ -56,12 +56,14 @@ namespace PlayniteWebEmulator
 
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
+            sessionRunner.Stop();
             pipeServer.Stop();
         }
 
         public override void Dispose()
         {
             pipeServer.Dispose();
+            sessionRunner.Dispose();
             emulatorJsRuntimeInstaller.Dispose();
             base.Dispose();
         }
@@ -77,16 +79,19 @@ namespace PlayniteWebEmulator
                     throw new InvalidDataException("The launcher did not provide a game file path.");
                 }
 
-                PlayniteApi.MainView.UIDispatcher.Invoke(() => sessionRunner.Run(profile, request.RomPath));
+                sessionRunner.Run(profile, request.RomPath);
                 return LaunchResponse.Success();
             }
             catch (Exception exception)
             {
                 Logger.Error(exception, "Web Emulator launch failed.");
-                PlayniteApi.Notifications.Add(
-                    "playnite-web-emulator-launch",
-                    $"Web Emulator could not launch the game: {exception.GetBaseException().Message}",
-                    NotificationType.Error);
+                if (!(exception is OperationCanceledException))
+                {
+                    PlayniteApi.Notifications.Add(
+                        "playnite-web-emulator-launch",
+                        $"Web Emulator could not launch the game: {exception.GetBaseException().Message}",
+                        NotificationType.Error);
+                }
                 return LaunchResponse.Failure(exception.GetBaseException().Message);
             }
         }

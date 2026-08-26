@@ -50,7 +50,9 @@ namespace PlayniteWebEmulator.Tests
             var html = EmulatorJsPlayerPage.Build(profile, "Altered Beast");
             True(html.Contains("window.EJS_controlScheme='segaMD'"), "Genesis control scheme missing");
             True(html.Contains("input='./runtime/version.json'"), "local version redirect missing");
-            True(html.Contains("report('fullscreen',enabled?'enter':'exit')"), "fullscreen bridge missing");
+            True(html.Contains("window.EJS_threads=true"), "threaded browser runtime missing");
+            True(html.Contains("navigator.sendBeacon('./diagnostics?event=closed"), "browser close tracking missing");
+            True(!html.Contains("playniteFullscreen"), "Playnite fullscreen shim should not exist");
         }
 
         private static void CommandLineParses()

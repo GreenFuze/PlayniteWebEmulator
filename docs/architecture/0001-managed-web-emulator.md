@@ -10,16 +10,19 @@ and does not own game discovery or installation.
 
 Each profile starts `PlayniteWebEmulator.Launcher.exe`. The launcher sends a
 validated request over a local named pipe and remains alive until the player
-window closes. The plugin opens Playnite's own Chromium web view and serves the
-player plus game/runtime files from an ephemeral loopback-only HTTP endpoint.
+tab closes. The plugin opens the user's default browser and serves the player
+plus game/runtime files from an ephemeral loopback-only HTTP endpoint. The page
+reports closure explicitly and sends a low-frequency heartbeat so Playnite's
+running state can fail closed if a browser exits without an unload event.
 
 This arrangement preserves normal Playnite semantics:
 
 - games retain ordinary emulator actions and can change emulator/profile;
 - Cloud Storage can discover the profiles through Playnite's emulator model;
 - Playnite tracks the helper process for playtime and running state;
-- no system browser, browser extension, or separately installed emulator is
-  required.
+- no browser extension or separately installed emulator is required;
+- native browser fullscreen and cross-origin isolation remain available to
+  EmulatorJS, avoiding Playnite web-view rendering limitations.
 
 ## Profile catalog
 

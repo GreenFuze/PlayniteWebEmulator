@@ -18,7 +18,11 @@ namespace PlayniteWebEmulator.Hosting
         private readonly Action<PlayerDiagnostic> reportDiagnostic;
         private readonly TcpListener listener;
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
+        private readonly ManualResetEventSlim pageOpened = new ManualResetEventSlim(false);
+        private readonly ManualResetEventSlim sessionEnded = new ManualResetEventSlim(false);
+        private readonly object activitySynchronization = new object();
         private readonly Task worker;
+        private DateTime lastActivityUtc = DateTime.UtcNow;
 
         public Uri Address { get; }
 
@@ -58,7 +62,23 @@ namespace PlayniteWebEmulator.Hosting
             }
             finally
             {
+                pageOpened.Dispose();
+                sessionEnded.Dispose();
                 cancellation.Dispose();
+            }
+        }
+
+        public void WaitForSessionEnd(CancellationToken cancellationToken)
+        {
+            if (!pageOpened.Wait(TimeSpan.FromSeconds(30), cancellationToken))
+                throw new InvalidOperationException("The default browser did not open the Web Emulator player.");
+
+            while (!sessionEnded.Wait(TimeSpan.FromSeconds(1), cancellationToken))
+            {
+                DateTime lastActivity;
+                lock (activitySynchronization) lastActivity = lastActivityUtc;
+                if (DateTime.UtcNow - lastActivity > TimeSpan.FromMinutes(3))
+                    throw new InvalidOperationException("The browser player stopped responding.");
             }
         }
 
@@ -95,7 +115,8 @@ namespace PlayniteWebEmulator.Hosting
                 var requestParts = requestLine.Split(' ');
                 if (requestParts.Length != 3 ||
                     (!string.Equals(requestParts[0], "GET", StringComparison.Ordinal) &&
-                     !string.Equals(requestParts[0], "HEAD", StringComparison.Ordinal)))
+                     !string.Equals(requestParts[0], "HEAD", StringComparison.Ordinal) &&
+                     !string.Equals(requestParts[0], "POST", StringComparison.Ordinal)))
                 {
                     WriteText(stream, "400 Bad Request", "Bad request.");
                     return;
@@ -112,8 +133,17 @@ namespace PlayniteWebEmulator.Hosting
                 var requestTarget = requestParts[1];
                 var requestPath = requestTarget.Split('?')[0];
                 var headOnly = string.Equals(requestParts[0], "HEAD", StringComparison.Ordinal);
+                var post = string.Equals(requestParts[0], "POST", StringComparison.Ordinal);
+                MarkActivity();
+                if (post && !string.Equals(requestPath, route + "diagnostics", StringComparison.Ordinal))
+                {
+                    WriteText(stream, "405 Method Not Allowed", "Method not allowed.");
+                    return;
+                }
+
                 if (string.Equals(requestPath, route, StringComparison.Ordinal))
                 {
+                    pageOpened.Set();
                     WriteBytes(stream, "200 OK", "text/html; charset=utf-8", page, headOnly, true);
                     return;
                 }
@@ -126,7 +156,10 @@ namespace PlayniteWebEmulator.Hosting
 
                 if (string.Equals(requestPath, route + "diagnostics", StringComparison.Ordinal))
                 {
-                    reportDiagnostic?.Invoke(ReadDiagnostic(requestTarget));
+                    var diagnostic = ReadDiagnostic(requestTarget);
+                    if (string.Equals(diagnostic.EventName, "closed", StringComparison.OrdinalIgnoreCase))
+                        sessionEnded.Set();
+                    reportDiagnostic?.Invoke(diagnostic);
                     WriteBytes(stream, "204 No Content", "text/plain; charset=utf-8", Array.Empty<byte>(), headOnly, false);
                     return;
                 }
@@ -148,6 +181,11 @@ namespace PlayniteWebEmulator.Hosting
                 reportDiagnostic?.Invoke(new PlayerDiagnostic("unknown-player-request", requestPath));
                 WriteText(stream, "404 Not Found", "Not found.");
             }
+        }
+
+        private void MarkActivity()
+        {
+            lock (activitySynchronization) lastActivityUtc = DateTime.UtcNow;
         }
 
         private static PlayerDiagnostic ReadDiagnostic(string requestTarget)
@@ -247,7 +285,7 @@ namespace PlayniteWebEmulator.Hosting
                 $"Content-Length: {body.Length}\r\n" +
                 "Cache-Control: no-store\r\n" +
                 "X-Content-Type-Options: nosniff\r\n" +
-                (playerPage ? "Content-Security-Policy: default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: data:; worker-src 'self' blob:; img-src 'self' blob: data:; media-src 'self' blob: data:\r\n" : string.Empty) +
+                (playerPage ? "Content-Security-Policy: default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: data:; worker-src 'self' blob:; img-src 'self' blob: data:; media-src 'self' blob: data:\r\nCross-Origin-Opener-Policy: same-origin\r\nCross-Origin-Embedder-Policy: require-corp\r\nCross-Origin-Resource-Policy: same-origin\r\nPermissions-Policy: fullscreen=(self)\r\n" : string.Empty) +
                 "Connection: close\r\n\r\n");
             stream.Write(headers, 0, headers.Length);
             if (!headOnly) stream.Write(body, 0, body.Length);

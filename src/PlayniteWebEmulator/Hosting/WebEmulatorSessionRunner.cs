@@ -2,16 +2,18 @@ using Playnite.SDK;
 using PlayniteWebEmulator.Emulation;
 using PlayniteWebEmulator.Runtime;
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.Windows.Media;
+using System.Threading;
 
 namespace PlayniteWebEmulator.Hosting
 {
-    internal sealed class WebEmulatorSessionRunner
+    internal sealed class WebEmulatorSessionRunner : IDisposable
     {
         private static readonly ILogger Logger = LogManager.GetLogger();
         private readonly IPlayniteAPI playniteApi;
         private readonly EmulatorJsRuntimeInstaller emulatorJsRuntimeInstaller;
+        private readonly CancellationTokenSource shutdown = new CancellationTokenSource();
 
         public WebEmulatorSessionRunner(
             IPlayniteAPI playniteApi,
@@ -42,46 +44,45 @@ namespace PlayniteWebEmulator.Hosting
             var runtimeDataPath = EnsureEmulatorJsRuntime();
             var gameName = Path.GetFileNameWithoutExtension(fullRomPath);
             var html = EmulatorJsPlayerPage.Build(profile, gameName);
-            using (var webView = playniteApi.WebViews.CreateView(new WebViewSettings
-            {
-                JavaScriptEnabled = true,
-                WindowWidth = 1280,
-                WindowHeight = 800,
-                WindowBackground = Colors.Black
-            }))
-            using (var fullScreenController = new PlayerWindowFullScreenController(webView.WindowHost))
             using (var server = new EmulatorLoopbackWebServer(
                 html,
                 runtimeDataPath,
                 fullRomPath,
                 diagnostic =>
                 {
-                    Logger.Info($"EmulatorJS [{profile.Id}] {diagnostic}");
-                    fullScreenController.Handle(diagnostic);
+                    if (!string.Equals(diagnostic.EventName, "heartbeat", StringComparison.OrdinalIgnoreCase))
+                        Logger.Info($"EmulatorJS [{profile.Id}] {diagnostic}");
                 }))
             {
-                Logger.Info($"Opening EmulatorJS player for '{gameName}' with profile '{profile.Id}' at {server.Address}.");
-                webView.Navigate(server.Address.AbsoluteUri);
-                webView.WindowHost.Title = $"{profile.Name} — Web Emulator";
-                webView.OpenDialog();
-                Logger.Info($"EmulatorJS player for '{gameName}' closed.");
+                Logger.Info($"Opening EmulatorJS player for '{gameName}' with profile '{profile.Id}' in the default browser at {server.Address}.");
+                Process.Start(new ProcessStartInfo(server.Address.AbsoluteUri) { UseShellExecute = true });
+                server.WaitForSessionEnd(shutdown.Token);
+                Logger.Info($"Browser player for '{gameName}' closed.");
             }
         }
+
+        public void Stop() => shutdown.Cancel();
+
+        public void Dispose() => shutdown.Dispose();
 
         private string EnsureEmulatorJsRuntime()
         {
             string runtimeDataPath = null;
-            var result = playniteApi.Dialogs.ActivateGlobalProgress(
-                async progressArgs =>
-                {
-                    runtimeDataPath = await emulatorJsRuntimeInstaller.EnsureInstalledAsync(
-                        update => UpdateProgress(progressArgs, update),
-                        progressArgs.CancelToken).ConfigureAwait(false);
-                },
-                new GlobalProgressOptions("Preparing EmulatorJS", true)
-                {
-                    IsIndeterminate = false
-                });
+            GlobalProgressResult result = null;
+            playniteApi.MainView.UIDispatcher.Invoke(() =>
+            {
+                result = playniteApi.Dialogs.ActivateGlobalProgress(
+                    async progressArgs =>
+                    {
+                        runtimeDataPath = await emulatorJsRuntimeInstaller.EnsureInstalledAsync(
+                            update => UpdateProgress(progressArgs, update),
+                            progressArgs.CancelToken).ConfigureAwait(false);
+                    },
+                    new GlobalProgressOptions("Preparing EmulatorJS", true)
+                    {
+                        IsIndeterminate = false
+                    });
+            });
 
             if (result.Canceled)
             {

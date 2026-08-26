@@ -33,7 +33,10 @@ as in MGA. There is no separate `mame-js` runtime in MGA's current code.
 - Web Emulator is a Playnite `GenericPlugin`, not a library/source plugin.
 - It registers one managed emulator with ordinary custom Playnite profiles.
 - A small helper process preserves Playnite's normal emulator process tracking.
-- The loaded plugin hosts the player in Playnite's Chromium web view.
+- The loaded plugin serves the player on loopback and opens it in the user's
+  default browser, where native fullscreen and browser acceleration work.
+- The helper remains alive while the browser tab reports its session, so
+  Playnite still tracks running state and playtime.
 - Emulator runtimes are acquired per engine, pinned, hash-verified, and stored
   beneath the plugin's user-data directory.
 - ROMs, game data, firmware, and BIOS files are never supplied by this project.
