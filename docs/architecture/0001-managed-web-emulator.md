@@ -44,6 +44,13 @@ licenses, and manifests. Third-party runtimes are downloaded into Playnite's
 plugin user-data directory on first use. Manifests pin immutable artifacts and
 SHA-256 values. Downloads are staged, verified, and atomically promoted.
 
+Archive extraction does not use SharpCompress's `WriteToDirectory` helper.
+Every entry is normalized and checked against the managed destination before
+it is written; links, split/encrypted entries, duplicates, excessive entry
+counts, and excessive expanded sizes are rejected. This is intentional because
+Playnite 10 currently supplies SharpCompress 0.26 and newer advisories affect
+the convenience extraction APIs.
+
 No runtime may be added by copying an untraceable binary from MGA. MGA's launch
 algorithms and Apache-licensed player glue may be adapted, but every emulator
 binary must independently satisfy the provenance gate in
@@ -55,4 +62,3 @@ The profile capability model will distinguish normal mode from a future
 RetroAchievements-enabled mode. The plugin will not claim achievements,
 save-RAM, snapshots, or cross-device save support unless the selected runtime
 and core implement and pass an end-to-end test for that capability.
-

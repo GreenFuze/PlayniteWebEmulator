@@ -5,6 +5,7 @@ using PlayniteWebEmulator.Emulation;
 using PlayniteWebEmulator.Hosting;
 using PlayniteWebEmulator.Interop;
 using PlayniteWebEmulator.Protocol;
+using PlayniteWebEmulator.Runtime;
 using System;
 using System.IO;
 
@@ -15,6 +16,7 @@ namespace PlayniteWebEmulator
         private static readonly ILogger Logger = LogManager.GetLogger();
         private readonly BrowserEmulatorProfileCatalog catalog;
         private readonly PlayniteEmulatorRegistrar registrar;
+        private readonly EmulatorJsRuntimeInstaller emulatorJsRuntimeInstaller;
         private readonly WebEmulatorSessionRunner sessionRunner;
         private readonly LaunchPipeServer pipeServer;
 
@@ -28,7 +30,8 @@ namespace PlayniteWebEmulator
                 ?? throw new InvalidOperationException("The Web Emulator plugin directory could not be resolved.");
             catalog = new BrowserEmulatorProfileCatalog();
             registrar = new PlayniteEmulatorRegistrar(PlayniteApi.Database, PlayniteApi.Emulation, catalog, pluginDirectory);
-            sessionRunner = new WebEmulatorSessionRunner(PlayniteApi);
+            emulatorJsRuntimeInstaller = new EmulatorJsRuntimeInstaller(GetPluginUserDataPath());
+            sessionRunner = new WebEmulatorSessionRunner(PlayniteApi, emulatorJsRuntimeInstaller);
             pipeServer = new LaunchPipeServer(HandleLaunch);
             Properties = new GenericPluginProperties { HasSettings = false };
         }
@@ -59,6 +62,7 @@ namespace PlayniteWebEmulator
         public override void Dispose()
         {
             pipeServer.Dispose();
+            emulatorJsRuntimeInstaller.Dispose();
             base.Dispose();
         }
 
@@ -88,4 +92,3 @@ namespace PlayniteWebEmulator
         }
     }
 }
-

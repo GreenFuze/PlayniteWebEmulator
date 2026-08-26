@@ -9,6 +9,8 @@ namespace PlayniteWebEmulator.Emulation
         public string Id { get; }
         public string Name { get; }
         public string RuntimeId { get; }
+        public string CoreId { get; }
+        public string ControlSchemeId { get; }
         public string PlatformSpecificationId { get; }
         public string PlatformName { get; }
         public IReadOnlyList<string> ImageExtensions { get; }
@@ -18,6 +20,8 @@ namespace PlayniteWebEmulator.Emulation
             string id,
             string name,
             string runtimeId,
+            string coreId,
+            string controlSchemeId,
             string platformSpecificationId,
             string platformName,
             IEnumerable<string> imageExtensions,
@@ -26,6 +30,8 @@ namespace PlayniteWebEmulator.Emulation
             Id = Required(id, nameof(id));
             Name = Required(name, nameof(name));
             RuntimeId = Required(runtimeId, nameof(runtimeId));
+            CoreId = string.IsNullOrWhiteSpace(coreId) ? null : coreId.Trim();
+            ControlSchemeId = string.IsNullOrWhiteSpace(controlSchemeId) ? null : controlSchemeId.Trim();
             PlatformSpecificationId = Required(platformSpecificationId, nameof(platformSpecificationId));
             PlatformName = Required(platformName, nameof(platformName));
             ImageExtensions = (imageExtensions ?? throw new ArgumentNullException(nameof(imageExtensions)))
@@ -51,4 +57,3 @@ namespace PlayniteWebEmulator.Emulation
         }
     }
 }
-

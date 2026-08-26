@@ -1,6 +1,7 @@
 using PlayniteWebEmulator.Emulation;
 using PlayniteWebEmulator.Launcher;
 using PlayniteWebEmulator.Protocol;
+using PlayniteWebEmulator.Hosting;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace PlayniteWebEmulator.Tests
         {
             Run("catalog covers MGA runtimes", CatalogCoversMgaRuntimes);
             Run("catalog IDs are unique", CatalogIdsAreUnique);
+            Run("player page pins platform controls and local update data", PlayerPagePinsControlsAndLocalData);
             Run("command line parses quoted values supplied by Windows", CommandLineParses);
             Run("command line fails on missing ROM", CommandLineFailsOnMissingRom);
             Run("pipe protocol round trips", PipeProtocolRoundTrips);
@@ -30,12 +32,25 @@ namespace PlayniteWebEmulator.Tests
             True(catalog.Profiles.Any(profile => profile.RuntimeId == "jsdos"), "js-dos missing");
             True(catalog.Profiles.Any(profile => profile.RuntimeId == "scummvm"), "ScummVM missing");
             Equal("arcade", catalog.Get("emulatorjs.arcade").PlatformSpecificationId, "Arcade platform");
+            Equal("mame2003_plus", catalog.Get("emulatorjs.arcade").CoreId, "Arcade core");
+            Equal("fceumm", catalog.Get("emulatorjs.nes").CoreId, "NES core");
+            Equal("segaMD", catalog.Get("emulatorjs.genesis").ControlSchemeId, "Genesis controls");
+            Equal("segaMS", catalog.Get("emulatorjs.mastersystem").ControlSchemeId, "Master System controls");
         }
 
         private static void CatalogIdsAreUnique()
         {
             var catalog = new BrowserEmulatorProfileCatalog();
             Equal(catalog.Profiles.Count, catalog.Profiles.Select(profile => profile.Id).Distinct().Count(), "unique IDs");
+        }
+
+        private static void PlayerPagePinsControlsAndLocalData()
+        {
+            var profile = new BrowserEmulatorProfileCatalog().Get("emulatorjs.genesis");
+            var html = EmulatorJsPlayerPage.Build(profile, "Altered Beast");
+            True(html.Contains("window.EJS_controlScheme='segaMD'"), "Genesis control scheme missing");
+            True(html.Contains("input='./runtime/version.json'"), "local version redirect missing");
+            True(html.Contains("report('fullscreen',enabled?'enter':'exit')"), "fullscreen bridge missing");
         }
 
         private static void CommandLineParses()
@@ -104,4 +119,3 @@ namespace PlayniteWebEmulator.Tests
         }
     }
 }
-

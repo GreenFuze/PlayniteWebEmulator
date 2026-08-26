@@ -14,10 +14,19 @@
     <PackageReference Include="PlayniteSDK" Version="6.16.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
+    <PackageReference Include="SharpCompress" Version="0.26.0">
+      <!-- Playnite 10 supplies this exact assembly at runtime. The reported advisories
+           affect WriteToDirectory helpers, which this plugin deliberately does not use;
+           EmulatorJsRuntimeInstaller validates and writes every entry itself. -->
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <NoWarn>NU1902</NoWarn>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Security" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,4 +56,3 @@
     <Copy SourceFiles="@(LauncherFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
   </Target>
 </Project>
-

@@ -9,10 +9,12 @@ The repository is private while the first usable version is developed.
 
 ## Current status
 
-The first vertical slice is under construction. The plugin currently defines
-the managed Playnite emulator/profile catalog and a tracked launcher-to-plugin
-session bridge. The initial diagnostic player proves the lifecycle before any
-large third-party runtime is downloaded or redistributed.
+The first playable vertical slice is available for development testing.
+EmulatorJS profiles launch real games in Playnite's Chromium window. On first
+use, the plugin downloads the pinned official EmulatorJS 4.2.3 release,
+verifies its size and SHA-256, extracts it into the plugin's managed data
+directory, and deletes the temporary archive. js-dos and ScummVM profiles are
+registered but deliberately fail fast until their runtimes are implemented.
 
 Planned launch coverage matches the browser engines already proven in
 MyGamesAnywhere (MGA):
@@ -56,4 +58,3 @@ dotnet build PlayniteWebEmulator.sln
 The plugin is licensed under Apache-2.0. Third-party emulator runtimes and
 cores retain their own licenses; consult `THIRD_PARTY_NOTICES.md` before
 redistributing a runtime cache.
-

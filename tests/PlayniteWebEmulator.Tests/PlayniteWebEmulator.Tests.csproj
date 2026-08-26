@@ -12,7 +12,7 @@
     <Compile Include="..\..\src\PlayniteWebEmulator.Launcher\LaunchCommandLine.cs" Link="Launcher\LaunchCommandLine.cs" />
     <Compile Include="..\..\src\PlayniteWebEmulator\Emulation\BrowserEmulatorProfile.cs" Link="Emulation\BrowserEmulatorProfile.cs" />
     <Compile Include="..\..\src\PlayniteWebEmulator\Emulation\BrowserEmulatorProfileCatalog.cs" Link="Emulation\BrowserEmulatorProfileCatalog.cs" />
+    <Compile Include="..\..\src\PlayniteWebEmulator\Hosting\EmulatorJsPlayerPage.cs" Link="Hosting\EmulatorJsPlayerPage.cs" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
 </Project>
-
