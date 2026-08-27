@@ -10,7 +10,7 @@ The repository is private while the first usable version is developed.
 ## Current status
 
 The first playable vertical slice is available for development testing.
-EmulatorJS profiles launch real games in Playnite's Chromium window. On first
+EmulatorJS profiles launch real games in the user's default browser. On first
 use, the plugin downloads the pinned official EmulatorJS 4.2.3 release,
 verifies its size and SHA-256, extracts it into the plugin's managed data
 directory, and deletes the temporary archive. js-dos and ScummVM profiles are

@@ -42,8 +42,9 @@ namespace PlayniteWebEmulator.Hosting
             }
 
             var runtimeDataPath = EnsureEmulatorJsRuntime();
+            var gameFileName = Path.GetFileName(fullRomPath);
             var gameName = Path.GetFileNameWithoutExtension(fullRomPath);
-            var html = EmulatorJsPlayerPage.Build(profile, gameName);
+            var html = EmulatorJsPlayerPage.Build(profile, gameName, gameFileName);
             using (var server = new EmulatorLoopbackWebServer(
                 html,
                 runtimeDataPath,

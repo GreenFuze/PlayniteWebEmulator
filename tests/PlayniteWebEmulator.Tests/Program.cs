@@ -47,12 +47,18 @@ namespace PlayniteWebEmulator.Tests
         private static void PlayerPagePinsControlsAndLocalData()
         {
             var profile = new BrowserEmulatorProfileCatalog().Get("emulatorjs.genesis");
-            var html = EmulatorJsPlayerPage.Build(profile, "Altered Beast");
+            var html = EmulatorJsPlayerPage.Build(profile, "Altered Beast", "Altered Beast (USA, Europe).zip");
             True(html.Contains("window.EJS_controlScheme='segaMD'"), "Genesis control scheme missing");
+            True(html.Contains("window.EJS_gameUrl='./game/Altered%20Beast%20%28USA%2C%20Europe%29.zip'"), "ROM filename-preserving URL missing");
             True(html.Contains("input='./runtime/version.json'"), "local version redirect missing");
             True(html.Contains("window.EJS_threads=true"), "threaded browser runtime missing");
             True(html.Contains("navigator.sendBeacon('./diagnostics?event=closed"), "browser close tracking missing");
             True(!html.Contains("playniteFullscreen"), "Playnite fullscreen shim should not exist");
+
+            var arcade = new BrowserEmulatorProfileCatalog().Get("emulatorjs.arcade");
+            var arcadeHtml = EmulatorJsPlayerPage.Build(arcade, "armwar", "armwar.zip");
+            True(arcadeHtml.Contains("window.EJS_gameName='armwar'"), "MAME set name missing");
+            True(arcadeHtml.Contains("window.EJS_gameUrl='./game/armwar.zip'"), "MAME archive filename missing");
         }
 
         private static void CommandLineParses()

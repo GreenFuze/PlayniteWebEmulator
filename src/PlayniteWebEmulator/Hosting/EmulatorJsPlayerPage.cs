@@ -6,11 +6,14 @@ namespace PlayniteWebEmulator.Hosting
 {
     internal static class EmulatorJsPlayerPage
     {
-        public static string Build(BrowserEmulatorProfile profile, string gameName)
+        public static string Build(BrowserEmulatorProfile profile, string gameName, string gameFileName)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             if (!string.Equals(profile.RuntimeId, "emulatorjs", StringComparison.Ordinal) || string.IsNullOrWhiteSpace(profile.CoreId))
                 throw new InvalidOperationException($"Profile '{profile.Id}' is not an EmulatorJS profile.");
+            if (string.IsNullOrWhiteSpace(gameFileName)) throw new ArgumentException("A game filename is required.", nameof(gameFileName));
+
+            var gameUrl = "./game/" + Uri.EscapeDataString(gameFileName);
 
             return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">" +
                 "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
@@ -26,7 +29,7 @@ namespace PlayniteWebEmulator.Hosting
                 "window.addEventListener('unhandledrejection',function(event){var detail=String(event.reason&&event.reason.message||event.reason||'unknown rejected promise');report('rejection',detail);});" +
                 "window.EJS_player='#game';" +
                 $"window.EJS_core='{JavaScript(profile.CoreId)}';" +
-                "window.EJS_gameUrl='./game';" +
+                $"window.EJS_gameUrl='{JavaScript(gameUrl)}';" +
                 $"window.EJS_gameName='{JavaScript(gameName)}';" +
                 $"window.EJS_controlScheme='{JavaScript(profile.ControlSchemeId)}';" +
                 "window.EJS_pathtodata='./runtime/';" +

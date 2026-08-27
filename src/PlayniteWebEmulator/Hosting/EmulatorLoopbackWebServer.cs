@@ -12,6 +12,7 @@ namespace PlayniteWebEmulator.Hosting
     {
         private readonly string route;
         private readonly string runtimeRoute;
+        private readonly string gameRoute;
         private readonly byte[] page;
         private readonly string runtimeDataRoot;
         private readonly string gamePath;
@@ -39,6 +40,7 @@ namespace PlayniteWebEmulator.Hosting
             page = Encoding.UTF8.GetBytes(html);
             route = "/session/" + Guid.NewGuid().ToString("N") + "/";
             runtimeRoute = route + "runtime/";
+            gameRoute = route + "game/" + Uri.EscapeDataString(Path.GetFileName(this.gamePath));
             listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
             listener.Start();
             var endpoint = (System.Net.IPEndPoint)listener.LocalEndpoint;
@@ -148,7 +150,7 @@ namespace PlayniteWebEmulator.Hosting
                     return;
                 }
 
-                if (string.Equals(requestPath, route + "game", StringComparison.Ordinal))
+                if (string.Equals(requestPath, gameRoute, StringComparison.Ordinal))
                 {
                     WriteFile(stream, gamePath, headers, headOnly);
                     return;
