@@ -9,12 +9,12 @@ The repository is private while the first usable version is developed.
 
 ## Current status
 
-The first playable vertical slice is available for development testing.
-EmulatorJS profiles launch real games in the user's default browser. On first
-use, the plugin downloads the pinned official EmulatorJS 4.2.3 release,
-verifies its size and SHA-256, extracts it into the plugin's managed data
-directory, and deletes the temporary archive. js-dos and ScummVM profiles are
-registered but deliberately fail fast until their runtimes are implemented.
+The first playable vertical slices are available for development testing.
+EmulatorJS profiles launch cartridge and arcade games in the user's default
+browser. ScummVM launches the DOS CD release of Discworld through its pinned
+Tinsel engine. Each implemented runtime is downloaded on first use, verified
+by size and SHA-256, and kept in the plugin's managed data directory. js-dos
+and unpinned ScummVM engines deliberately fail fast.
 
 Planned launch coverage matches the browser engines already proven in
 MyGamesAnywhere (MGA):
@@ -23,7 +23,7 @@ MyGamesAnywhere (MGA):
 | --- | --- |
 | EmulatorJS | NES, SNES, Game Boy, Game Boy Color, Game Boy Advance, Nintendo 64, Sega Genesis/Mega Drive, Master System, Game Gear, Sega CD, Sega 32X, PlayStation, Arcade |
 | js-dos | PC (DOS) |
-| ScummVM WebAssembly | PC (DOS) and PC (Windows) ScummVM-compatible game data |
+| ScummVM WebAssembly | PC (DOS) and PC (Windows) ScummVM-compatible game data; Tinsel/Discworld is the first pinned engine |
 
 Arcade is intentionally implemented through EmulatorJS's MAME 2003-Plus core,
 as in MGA. There is no separate `mame-js` runtime in MGA's current code.

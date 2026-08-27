@@ -13,6 +13,9 @@
     <Compile Include="..\..\src\PlayniteWebEmulator\Emulation\BrowserEmulatorProfile.cs" Link="Emulation\BrowserEmulatorProfile.cs" />
     <Compile Include="..\..\src\PlayniteWebEmulator\Emulation\BrowserEmulatorProfileCatalog.cs" Link="Emulation\BrowserEmulatorProfileCatalog.cs" />
     <Compile Include="..\..\src\PlayniteWebEmulator\Hosting\EmulatorJsPlayerPage.cs" Link="Hosting\EmulatorJsPlayerPage.cs" />
+    <Compile Include="..\..\src\PlayniteWebEmulator\Hosting\ScummVmPlayerPage.cs" Link="Hosting\ScummVmPlayerPage.cs" />
+    <Compile Include="..\..\src\PlayniteWebEmulator\Emulation\ScummVmEngineResolver.cs" Link="Emulation\ScummVmEngineResolver.cs" />
+    <Compile Include="..\..\src\PlayniteWebEmulator\Runtime\ScummVmRuntimeManifest.cs" Link="Runtime\ScummVmRuntimeManifest.cs" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
 </Project>

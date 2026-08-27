@@ -2,6 +2,7 @@ using PlayniteWebEmulator.Emulation;
 using PlayniteWebEmulator.Launcher;
 using PlayniteWebEmulator.Protocol;
 using PlayniteWebEmulator.Hosting;
+using PlayniteWebEmulator.Runtime;
 using System;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace PlayniteWebEmulator.Tests
             Run("catalog covers MGA runtimes", CatalogCoversMgaRuntimes);
             Run("catalog IDs are unique", CatalogIdsAreUnique);
             Run("player page pins platform controls and local update data", PlayerPagePinsControlsAndLocalData);
+            Run("ScummVM Discworld plan is explicit and safe", ScummVmDiscworldPlanIsExplicitAndSafe);
+            Run("ScummVM player mounts game data and pinned engine", ScummVmPlayerMountsGameDataAndPinnedEngine);
             Run("command line parses quoted values supplied by Windows", CommandLineParses);
             Run("command line fails on missing ROM", CommandLineFailsOnMissingRom);
             Run("pipe protocol round trips", PipeProtocolRoundTrips);
@@ -66,6 +69,54 @@ namespace PlayniteWebEmulator.Tests
             var parsed = LaunchCommandLine.Parse(new[] { "--profile", "emulatorjs.nes", "--rom", @"C:\Games\Mario Bros.nes" });
             Equal("emulatorjs.nes", parsed.ProfileId, "profile");
             Equal(@"C:\Games\Mario Bros.nes", parsed.RomPath, "ROM");
+        }
+
+        private static void ScummVmDiscworldPlanIsExplicitAndSafe()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "playnite-web-emulator-test-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                File.WriteAllBytes(Path.Combine(root, "DISCMAP.SCN"), new byte[] { 1 });
+                File.WriteAllBytes(Path.Combine(root, "OBJECTS.SCN"), new byte[] { 2 });
+                var marker = Path.Combine(root, "launch.scummvm");
+                File.WriteAllText(marker, string.Empty);
+                var plan = new ScummVmEngineResolver().Resolve(marker);
+                Equal("libtinsel.so", plan.EnginePluginFileName, "Discworld engine plugin");
+                Equal(2, plan.Files.Count, "game file count");
+                True(plan.Files.All(file => !file.RelativePath.Contains("..")), "unsafe relative path");
+                True(ScummVmRuntimeManifest.GetRequiredFiles(plan.EnginePluginFileName)
+                    .Any(file => file.RelativePath == "data/plugins/libtinsel.so"), "pinned Tinsel runtime missing");
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+        }
+
+        private static void ScummVmPlayerMountsGameDataAndPinnedEngine()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "playnite-web-emulator-test-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                File.WriteAllBytes(Path.Combine(root, "DISCMAP.SCN"), new byte[] { 1 });
+                File.WriteAllBytes(Path.Combine(root, "OBJECTS.SCN"), new byte[] { 2 });
+                var marker = Path.Combine(root, "launch.scummvm");
+                File.WriteAllText(marker, string.Empty);
+                var plan = new ScummVmEngineResolver().Resolve(marker);
+                var html = ScummVmPlayerPage.Build("Discworld", plan);
+                True(html.Contains("/plugins/libtinsel.so"), "Tinsel plugin mount missing");
+                True(html.Contains("--path=/games/game --auto-detect"), "ScummVM auto-detect arguments missing");
+                True(html.Contains("./game/DISCMAP.SCN"), "game route missing");
+                True(html.Contains("id=\"download-modal-progress-fill\""), "ScummVM download progress contract missing");
+                True(html.Contains("httpHideProgressBar"), "ScummVM progress completion hook missing");
+                True(html.Contains("navigator.sendBeacon('./diagnostics?event=closed"), "close tracking missing");
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
         }
 
         private static void CommandLineFailsOnMissingRom()

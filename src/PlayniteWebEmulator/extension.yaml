@@ -7,4 +7,7 @@ Type: GenericPlugin
 Links:
   - Name: Source code
     Url: https://github.com/GreenFuze/PlayniteWebEmulator
-
+  - Name: EmulatorJS
+    Url: https://github.com/EmulatorJS/EmulatorJS
+  - Name: ScummVM
+    Url: https://github.com/scummvm/scummvm

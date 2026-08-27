@@ -17,6 +17,7 @@ namespace PlayniteWebEmulator
         private readonly BrowserEmulatorProfileCatalog catalog;
         private readonly PlayniteEmulatorRegistrar registrar;
         private readonly EmulatorJsRuntimeInstaller emulatorJsRuntimeInstaller;
+        private readonly ScummVmRuntimeInstaller scummVmRuntimeInstaller;
         private readonly WebEmulatorSessionRunner sessionRunner;
         private readonly LaunchPipeServer pipeServer;
 
@@ -31,7 +32,12 @@ namespace PlayniteWebEmulator
             catalog = new BrowserEmulatorProfileCatalog();
             registrar = new PlayniteEmulatorRegistrar(PlayniteApi.Database, PlayniteApi.Emulation, catalog, pluginDirectory);
             emulatorJsRuntimeInstaller = new EmulatorJsRuntimeInstaller(GetPluginUserDataPath());
-            sessionRunner = new WebEmulatorSessionRunner(PlayniteApi, emulatorJsRuntimeInstaller);
+            scummVmRuntimeInstaller = new ScummVmRuntimeInstaller(GetPluginUserDataPath());
+            sessionRunner = new WebEmulatorSessionRunner(
+                PlayniteApi,
+                emulatorJsRuntimeInstaller,
+                scummVmRuntimeInstaller,
+                new ScummVmEngineResolver());
             pipeServer = new LaunchPipeServer(HandleLaunch);
             Properties = new GenericPluginProperties { HasSettings = false };
         }
@@ -65,6 +71,7 @@ namespace PlayniteWebEmulator
             pipeServer.Dispose();
             sessionRunner.Dispose();
             emulatorJsRuntimeInstaller.Dispose();
+            scummVmRuntimeInstaller.Dispose();
             base.Dispose();
         }
 

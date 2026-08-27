@@ -4,6 +4,7 @@ using PlayniteWebEmulator.Runtime;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace PlayniteWebEmulator.Hosting
@@ -13,15 +14,23 @@ namespace PlayniteWebEmulator.Hosting
         private static readonly ILogger Logger = LogManager.GetLogger();
         private readonly IPlayniteAPI playniteApi;
         private readonly EmulatorJsRuntimeInstaller emulatorJsRuntimeInstaller;
+        private readonly ScummVmRuntimeInstaller scummVmRuntimeInstaller;
+        private readonly ScummVmEngineResolver scummVmEngineResolver;
         private readonly CancellationTokenSource shutdown = new CancellationTokenSource();
 
         public WebEmulatorSessionRunner(
             IPlayniteAPI playniteApi,
-            EmulatorJsRuntimeInstaller emulatorJsRuntimeInstaller)
+            EmulatorJsRuntimeInstaller emulatorJsRuntimeInstaller,
+            ScummVmRuntimeInstaller scummVmRuntimeInstaller,
+            ScummVmEngineResolver scummVmEngineResolver)
         {
             this.playniteApi = playniteApi ?? throw new ArgumentNullException(nameof(playniteApi));
             this.emulatorJsRuntimeInstaller = emulatorJsRuntimeInstaller
                 ?? throw new ArgumentNullException(nameof(emulatorJsRuntimeInstaller));
+            this.scummVmRuntimeInstaller = scummVmRuntimeInstaller
+                ?? throw new ArgumentNullException(nameof(scummVmRuntimeInstaller));
+            this.scummVmEngineResolver = scummVmEngineResolver
+                ?? throw new ArgumentNullException(nameof(scummVmEngineResolver));
         }
 
         public void Run(BrowserEmulatorProfile profile, string romPath)
@@ -35,11 +44,20 @@ namespace PlayniteWebEmulator.Hosting
                 throw new FileNotFoundException("The selected game file does not exist.", fullRomPath);
             }
 
-            if (!string.Equals(profile.RuntimeId, "emulatorjs", StringComparison.Ordinal))
+            if (string.Equals(profile.RuntimeId, "scummvm", StringComparison.Ordinal))
             {
-                throw new NotSupportedException(
-                    $"The {profile.RuntimeId} web runtime is not implemented yet. Choose an EmulatorJS profile for this game.");
+                RunScummVm(profile, fullRomPath);
+                return;
             }
+
+            if (!string.Equals(profile.RuntimeId, "emulatorjs", StringComparison.Ordinal))
+                throw new NotSupportedException($"The {profile.RuntimeId} web runtime is not implemented yet.");
+
+            RunEmulatorJs(profile, fullRomPath);
+        }
+
+        private void RunEmulatorJs(BrowserEmulatorProfile profile, string fullRomPath)
+        {
 
             var runtimeDataPath = EnsureEmulatorJsRuntime();
             var gameFileName = Path.GetFileName(fullRomPath);
@@ -59,6 +77,30 @@ namespace PlayniteWebEmulator.Hosting
                 Process.Start(new ProcessStartInfo(server.Address.AbsoluteUri) { UseShellExecute = true });
                 server.WaitForSessionEnd(shutdown.Token);
                 Logger.Info($"Browser player for '{gameName}' closed.");
+            }
+        }
+
+        private void RunScummVm(BrowserEmulatorProfile profile, string markerPath)
+        {
+            var plan = scummVmEngineResolver.Resolve(markerPath);
+            var runtimeRoot = EnsureScummVmRuntime(plan.EnginePluginFileName);
+            var gameName = Path.GetFileName(plan.GameRoot);
+            var html = ScummVmPlayerPage.Build(gameName, plan);
+            using (var server = EmulatorLoopbackWebServer.ForGameDirectory(
+                html,
+                runtimeRoot,
+                plan.GameRoot,
+                plan.Files.Select(file => file.RelativePath),
+                diagnostic =>
+                {
+                    if (!string.Equals(diagnostic.EventName, "heartbeat", StringComparison.OrdinalIgnoreCase))
+                        Logger.Info($"ScummVM [{profile.Id}] {diagnostic}");
+                }))
+            {
+                Logger.Info($"Opening ScummVM player for '{gameName}' with engine '{plan.EnginePluginFileName}' at {server.Address}.");
+                Process.Start(new ProcessStartInfo(server.Address.AbsoluteUri) { UseShellExecute = true });
+                server.WaitForSessionEnd(shutdown.Token);
+                Logger.Info($"ScummVM browser player for '{gameName}' closed.");
             }
         }
 
@@ -101,6 +143,32 @@ namespace PlayniteWebEmulator.Hosting
             }
 
             return runtimeDataPath;
+        }
+
+        private string EnsureScummVmRuntime(string enginePluginFileName)
+        {
+            string runtimeRoot = null;
+            GlobalProgressResult result = null;
+            playniteApi.MainView.UIDispatcher.Invoke(() =>
+            {
+                result = playniteApi.Dialogs.ActivateGlobalProgress(
+                    async progressArgs =>
+                    {
+                        runtimeRoot = await scummVmRuntimeInstaller.EnsureInstalledAsync(
+                            enginePluginFileName,
+                            update => UpdateProgress(progressArgs, update),
+                            progressArgs.CancelToken).ConfigureAwait(false);
+                    },
+                    new GlobalProgressOptions("Preparing ScummVM", true)
+                    {
+                        IsIndeterminate = false
+                    });
+            });
+
+            if (result.Canceled) throw new OperationCanceledException("ScummVM setup was canceled.");
+            if (result.Error != null) throw new InvalidOperationException("ScummVM setup failed.", result.Error);
+            if (string.IsNullOrWhiteSpace(runtimeRoot)) throw new InvalidOperationException("ScummVM setup did not produce a usable runtime.");
+            return runtimeRoot;
         }
 
         private static void UpdateProgress(GlobalProgressActionArgs progressArgs, RuntimeInstallProgress update)

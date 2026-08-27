@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,9 +14,12 @@ namespace PlayniteWebEmulator.Hosting
         private readonly string route;
         private readonly string runtimeRoute;
         private readonly string gameRoute;
+        private readonly string gameDirectoryRoute;
         private readonly byte[] page;
         private readonly string runtimeDataRoot;
         private readonly string gamePath;
+        private readonly string gameRoot;
+        private readonly HashSet<string> gameRelativePaths;
         private readonly Action<PlayerDiagnostic> reportDiagnostic;
         private readonly TcpListener listener;
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
@@ -32,21 +36,51 @@ namespace PlayniteWebEmulator.Hosting
             string runtimeDataRoot,
             string gamePath,
             Action<PlayerDiagnostic> reportDiagnostic = null)
+            : this(html, runtimeDataRoot, RequiredFile(gamePath, nameof(gamePath)), null, null, reportDiagnostic)
+        {
+        }
+
+        private EmulatorLoopbackWebServer(
+            string html,
+            string runtimeDataRoot,
+            string gamePath,
+            string gameRoot,
+            IEnumerable<string> gameRelativePaths,
+            Action<PlayerDiagnostic> reportDiagnostic)
         {
             if (string.IsNullOrWhiteSpace(html)) throw new ArgumentException("A player page is required.", nameof(html));
             this.runtimeDataRoot = RequiredDirectory(runtimeDataRoot, nameof(runtimeDataRoot));
-            this.gamePath = RequiredFile(gamePath, nameof(gamePath));
+            if ((gamePath == null) == (gameRoot == null))
+                throw new ArgumentException("Exactly one game content mode must be configured.");
+            this.gamePath = gamePath;
+            this.gameRoot = gameRoot == null ? null : RequiredDirectory(gameRoot, nameof(gameRoot));
+            this.gameRelativePaths = BuildGameFileSet(this.gameRoot, gameRelativePaths);
             this.reportDiagnostic = reportDiagnostic;
             page = Encoding.UTF8.GetBytes(html);
             route = "/session/" + Guid.NewGuid().ToString("N") + "/";
             runtimeRoute = route + "runtime/";
-            gameRoute = route + "game/" + Uri.EscapeDataString(Path.GetFileName(this.gamePath));
+            gameDirectoryRoute = route + "game/";
+            gameRoute = this.gamePath == null ? null : gameDirectoryRoute + Uri.EscapeDataString(Path.GetFileName(this.gamePath));
             listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
             listener.Start();
             var endpoint = (System.Net.IPEndPoint)listener.LocalEndpoint;
             Address = new Uri($"http://127.0.0.1:{endpoint.Port}{route}");
             worker = Task.Run(() => Run(cancellation.Token));
         }
+
+        public static EmulatorLoopbackWebServer ForGameDirectory(
+            string html,
+            string runtimeDataRoot,
+            string gameRoot,
+            IEnumerable<string> gameRelativePaths,
+            Action<PlayerDiagnostic> reportDiagnostic = null) =>
+            new EmulatorLoopbackWebServer(
+                html,
+                runtimeDataRoot,
+                null,
+                RequiredDirectory(gameRoot, nameof(gameRoot)),
+                gameRelativePaths,
+                reportDiagnostic);
 
         public void Dispose()
         {
@@ -150,9 +184,23 @@ namespace PlayniteWebEmulator.Hosting
                     return;
                 }
 
-                if (string.Equals(requestPath, gameRoute, StringComparison.Ordinal))
+                if (gamePath != null && string.Equals(requestPath, gameRoute, StringComparison.Ordinal))
                 {
                     WriteFile(stream, gamePath, headers, headOnly);
+                    return;
+                }
+
+                if (gameRoot != null && requestPath.StartsWith(gameDirectoryRoute, StringComparison.Ordinal))
+                {
+                    var relative = Uri.UnescapeDataString(requestPath.Substring(gameDirectoryRoute.Length));
+                    if (!TryResolveGameFile(relative, out var gameFile))
+                    {
+                        reportDiagnostic?.Invoke(new PlayerDiagnostic("missing-game-resource", relative));
+                        WriteText(stream, "404 Not Found", "Not found.");
+                        return;
+                    }
+
+                    WriteFile(stream, gameFile, headers, headOnly);
                     return;
                 }
 
@@ -218,6 +266,42 @@ namespace PlayniteWebEmulator.Hosting
             if (!candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !File.Exists(candidate)) return false;
             filePath = candidate;
             return true;
+        }
+
+        private bool TryResolveGameFile(string relativePath, out string filePath)
+        {
+            filePath = null;
+            var normalized = NormalizeRelativePath(relativePath);
+            if (normalized == null || !gameRelativePaths.Contains(normalized)) return false;
+            var root = EnsureTrailingSeparator(gameRoot);
+            var candidate = Path.GetFullPath(Path.Combine(gameRoot, normalized.Replace('/', Path.DirectorySeparatorChar)));
+            if (!candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !File.Exists(candidate)) return false;
+            filePath = candidate;
+            return true;
+        }
+
+        private static HashSet<string> BuildGameFileSet(string gameRoot, IEnumerable<string> relativePaths)
+        {
+            if (gameRoot == null) return null;
+            if (relativePaths == null) throw new ArgumentNullException(nameof(relativePaths));
+            var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var relativePath in relativePaths)
+            {
+                var normalized = NormalizeRelativePath(relativePath);
+                if (normalized == null) throw new InvalidDataException($"Unsafe game content path: {relativePath}");
+                if (!result.Add(normalized)) throw new InvalidDataException($"Duplicate game content path: {relativePath}");
+            }
+            if (result.Count == 0) throw new InvalidDataException("A game directory must expose at least one file.");
+            return result;
+        }
+
+        private static string NormalizeRelativePath(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            var normalized = value.Replace('\\', '/').Trim('/');
+            var parts = normalized.Split('/');
+            if (parts.Length == 0 || parts.Any(part => part.Length == 0 || part == "." || part == "..")) return null;
+            return string.Join("/", parts);
         }
 
         private static void WriteFile(Stream output, string path, IReadOnlyDictionary<string, string> requestHeaders, bool headOnly)
@@ -304,6 +388,7 @@ namespace PlayniteWebEmulator.Hosting
                 case ".css": return "text/css; charset=utf-8";
                 case ".json": return "application/json; charset=utf-8";
                 case ".wasm": return "application/wasm";
+                case ".so": return "application/wasm";
                 case ".svg": return "image/svg+xml";
                 case ".png": return "image/png";
                 case ".jpg":
