@@ -190,6 +190,7 @@ namespace PlayniteWebEmulator.Tests
                 True(html.Contains("initFs:initFs"), "game filesystem initialization missing");
                 True(html.Contains("noCloud:true"), "js-dos cloud services must be disabled");
                 True(html.Contains("noNetworking:true"), "js-dos networking must be disabled");
+                True(html.Contains("#player canvas{cursor:none!important}"), "browser cursor should be hidden over the DOS canvas");
                 True(html.Contains("navigator.sendBeacon('./diagnostics?event=closed"), "close tracking missing");
             }
             finally

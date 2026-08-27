@@ -24,6 +24,7 @@ namespace PlayniteWebEmulator.Hosting
                 $"<title>{WebUtility.HtmlEncode(gameName)} — Web Emulator</title>" +
                 "<link rel=\"stylesheet\" href=\"./runtime/js-dos.css\"><style>" +
                 "html,body,#player{width:100%;height:100%;margin:0;background:#000;overflow:hidden}" +
+                "#player canvas{cursor:none!important}" +
                 "#status{position:fixed;left:1rem;right:1rem;bottom:1rem;padding:.8rem 1rem;background:rgba(12,18,30,.94);border:1px solid #475569;border-radius:.6rem;color:#fff;font:14px Segoe UI,sans-serif;z-index:9999}" +
                 "#status.error{background:rgba(127,29,29,.96);border-color:#ef4444}#progress{width:100%;height:.55rem;margin-top:.55rem}" +
                 "</style></head><body><div id=\"player\"></div><div id=\"status\"><span id=\"statusText\">Loading DOS game files…</span><progress id=\"progress\" max=\"1\" value=\"0\"></progress></div>" +
