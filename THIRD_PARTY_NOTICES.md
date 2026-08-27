@@ -1,29 +1,62 @@
-# Third-party notices and runtime gate
+# Third-party credits and license notices
 
-Web Emulator gives visible credit to every emulator frontend, core, and engine
-it uses. It does not provide ROMs, copyrighted game data, firmware, or BIOS
-files. Users must provide game data they are legally entitled to use.
+Web Emulator is licensed under Apache-2.0. Emulator frontends, cores, and
+engines are independent works and are not relicensed by this project. The
+Playnite add-on package does not contain the emulator runtime binaries listed
+below: the installed add-on downloads pinned, hash-verified artifacts directly
+from the stated upstream projects on first use.
 
-No third-party runtime binary is committed to this repository. Approved
-runtimes are downloaded on demand only after passing the provenance gate below.
+Web Emulator does not provide games, ROM images, copyrighted game data,
+firmware, or BIOS files. Users must provide content they are legally entitled to
+use.
 
-| Component | Intended pinned line | Upstream and credit | License / constraint | Distribution plan |
-| --- | --- | --- | --- | --- |
-| EmulatorJS | 4.2.3 initially, matching MGA | [EmulatorJS](https://github.com/EmulatorJS/EmulatorJS), created and maintained by the EmulatorJS contributors | GPL-3.0; individual libretro cores have their own licenses | Download the official release on demand; retain license and core notices |
-| js-dos | 8.3.20 (`1263c31f0c4d1b3ed83cbb24b586c3d2e52a7228`), with emulator backend 8.3.8 (`387f7275010d529c408d9afe684584e6e18bd8c7`) and DOSBox (`98d1639f66ec91652f5661cf2f4df689721a73e0`) | [js-dos](https://github.com/caiiiycuk/js-dos), by Alexander Guryanov (aka caiiiycuk) and contributors; [DOSBox](https://github.com/js-dos/dosbox) | GPL-2.0; exact license text and immutable corresponding-source links are retained beside the downloaded runtime | Download official `v8.3.20/release.zip` on demand; require size `3,697,001` and SHA-256 `0ad8cc047c1a9beeeb508e2c09ce520da4b6df41019e93b09f84b4e6814824ef`; extract only the seven required frontend/DOSBox files (not the unused DOSBox-X backend); disable js-dos cloud/network services |
-| ScummVM WebAssembly | ScummVM `c663ad7ab10ad669c8b6d9941f1f3814ba4c2486`, built with Emscripten 6.0.2; deployment `ccafc76bb8653da0987450599425b0f8d0fa125f` from [chkuendig/scummvm-demo](https://github.com/chkuendig/scummvm-demo) | [ScummVM](https://github.com/scummvm/scummvm), by the ScummVM Team; browser build maintained by the scummvm-demo contributors | GPL-3.0-or-later plus component licenses; the downloaded runtime includes `COPYING`, `COPYRIGHT`, `AUTHORS`, and all bundled component license files | Download immutable, individually SHA-256-pinned files on demand; currently install only the Tinsel engine plug-in needed by Discworld; corresponding source is the pinned ScummVM commit and demo build source |
-| MAME 2003-Plus libretro core | EmulatorJS core, initially matching MGA | [MAME 2003-Plus](https://github.com/libretro/mame2003-plus-libretro), by the MAME and libretro contributors | Classic MAME 0.78 non-commercial license; binary distribution requires source availability and unchanged notices | Optional Arcade runtime component with an explicit non-commercial notice and source link |
+## Browser emulator frontends and engines
 
-## Provenance gate
+| Component | Credit and source | License | How Web Emulator uses it |
+| --- | --- | --- | --- |
+| EmulatorJS 4.2.3 | [EmulatorJS contributors](https://github.com/EmulatorJS/EmulatorJS/tree/v4.2.3) | GPL-3.0 | Downloads the official `4.2.3.7z` release directly from GitHub; validates size `303,554,683` and SHA-256 `07d451bc06fa3ad04ab30d9b94eb63ac34ad0babee52d60357b002bde8f3850b`. The upstream archive includes its GPL license and all stable cores. |
+| js-dos 8.3.20 | [Alexander Guryanov (caiiiycuk) and contributors](https://github.com/caiiiycuk/js-dos/tree/1263c31f0c4d1b3ed83cbb24b586c3d2e52a7228) | GPL-2.0 | Downloads the official `release.zip`; extracts only seven required frontend/backend files; installs the GPL-2.0 text and immutable source links beside the runtime; disables js-dos cloud and networking services. |
+| js-dos emulator backend 8.3.8 | [caiiiycuk/emulators contributors](https://github.com/caiiiycuk/emulators/tree/387f7275010d529c408d9afe684584e6e18bd8c7) | GPL-2.0 | Supplies the pinned WebAssembly DOSBox backend used by js-dos. |
+| DOSBox for js-dos | [DOSBox and js-dos contributors](https://github.com/js-dos/dosbox/tree/98d1639f66ec91652f5661cf2f4df689721a73e0) | GPL-2.0 | Corresponding source for the pinned js-dos DOSBox backend. |
+| ScummVM | [ScummVM Team and contributors](https://github.com/scummvm/scummvm/tree/c663ad7ab10ad669c8b6d9941f1f3814ba4c2486) | GPL-3.0-or-later plus component licenses | Downloads individually pinned WebAssembly/runtime files and the Tinsel engine plug-in. The installed runtime includes `COPYING`, `COPYRIGHT`, `AUTHORS`, and all component license files supplied by the build. |
+| scummvm-demo web build | [Christian Kuendig and contributors](https://github.com/chkuendig/scummvm-demo/tree/ccafc76bb8653da0987450599425b0f8d0fa125f) | Build source; bundled ScummVM terms apply | Immutable source and deployment used for the pinned Emscripten 6.0.2 browser build. |
 
-Before adding a runtime manifest, all of the following must be recorded:
+## EmulatorJS cores used by Web Emulator profiles
 
-1. Exact upstream repository and immutable tag or commit.
-2. Exact official artifact URL or reproducible build instructions.
-3. SHA-256 for every downloaded archive.
-4. Complete licenses/notices for the frontend and selected core(s).
-5. Corresponding-source location when a copyleft binary is distributed.
-6. A user-visible credit entry and capability/limitation entry.
+EmulatorJS's official 4.2.3 release archive contains the complete stable core
+set, including the cores below. Web Emulator selects these cores at runtime and
+credits their authors and contributors. Follow each source link for the full
+license text and component-level notices.
 
-Fail closed: a missing hash, unknown source revision, or absent license blocks
-runtime installation.
+| Core | Platforms in Web Emulator | Credit and source | License / important restriction |
+| --- | --- | --- | --- |
+| FCEUmm | NES, Famicom Disk System | [FCEUmm and libretro contributors](https://github.com/libretro/libretro-fceumm) | GPL-2.0 |
+| Snes9x | SNES | [Snes9x Team and libretro contributors](https://github.com/snes9xgit/snes9x) | Custom Snes9x license; **non-commercial use only** |
+| Gambatte | Game Boy, Game Boy Color | [Sindre Aamås and libretro contributors](https://github.com/libretro/gambatte-libretro) | GPL-2.0 |
+| mGBA | Game Boy Advance | [Jeffrey Pfau and contributors](https://github.com/mgba-emu/mgba) | MPL-2.0 |
+| Mupen64Plus-Next | Nintendo 64 | [Mupen64Plus-Next and libretro contributors](https://github.com/libretro/mupen64plus-libretro-nx) | GPL-2.0 |
+| PicoDrive | Sega Genesis/Mega Drive, Master System, Game Gear, Sega CD, Sega 32X | [notaz, fdave, and contributors](https://github.com/libretro/picodrive) | MAME-derived license; **non-commercial use only** |
+| PCSX-ReARMed | PlayStation | [notaz and contributors](https://github.com/notaz/pcsx_rearmed) | GPL-2.0-or-later |
+| MAME 2003-Plus | Arcade | [MAME and libretro contributors](https://github.com/libretro/mame2003-plus-libretro) | Classic MAME 0.78 license; **non-commercial use only**; users must provide lawful ROM images; binary source is available at the linked project |
+
+The EmulatorJS core build pipeline is published at
+[EmulatorJS/build](https://github.com/EmulatorJS/build). The exact official
+runtime archive is pinned by URL, byte size, and SHA-256; this project neither
+rebuilds nor modifies those core binaries.
+
+## Build-time dependencies
+
+| Component | Credit and source | License / distribution boundary |
+| --- | --- | --- |
+| Playnite SDK 6.16.0 | [Josef Nemec and Playnite contributors](https://github.com/JosefNemec/Playnite) | MIT; referenced only at build time, with the runtime assembly supplied by Playnite and excluded from the add-on package |
+| SharpCompress 0.26.0 API | [SharpCompress contributors](https://github.com/adamhathcock/sharpcompress) | MIT; Playnite supplies the runtime assembly and it is excluded from the add-on package. Web Emulator does not call the advisory-affected `WriteToDirectory` helpers; it validates and writes every archive entry itself. |
+
+## Provenance and safety gate
+
+Every runtime manifest must record an official immutable artifact or file URL,
+expected byte size, SHA-256, upstream source, and applicable license notices.
+Missing provenance, a changed hash/size, an unsafe archive entry, or a missing
+license file fails installation closed.
+
+This document is an attribution and distribution record. It does not replace or
+modify any upstream license.

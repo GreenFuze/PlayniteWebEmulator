@@ -15,3 +15,7 @@ Links:
     Url: https://github.com/js-dos/dosbox
   - Name: ScummVM
     Url: https://github.com/scummvm/scummvm
+  - Name: Emulator core credits and licenses
+    Url: https://github.com/GreenFuze/PlayniteWebEmulator/blob/master/THIRD_PARTY_NOTICES.md
+  - Name: MAME 2003-Plus
+    Url: https://github.com/libretro/mame2003-plus-libretro

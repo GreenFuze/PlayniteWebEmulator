@@ -17,3 +17,7 @@ The emulator engines are independent third-party works downloaded on demand.
 They are not covered by this project's Apache-2.0 license. See
 THIRD_PARTY_NOTICES.md for credits, source links, and license boundaries.
 
+Web Emulator uses the SharpCompress API (MIT License, Copyright Adam Hathcock
+and contributors) to inspect the official EmulatorJS and js-dos archives.
+Playnite supplies that runtime assembly; it is not redistributed in the
+extension package.

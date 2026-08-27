@@ -3,6 +3,7 @@ using PlayniteWebEmulator.Launcher;
 using PlayniteWebEmulator.Protocol;
 using PlayniteWebEmulator.Hosting;
 using PlayniteWebEmulator.Runtime;
+using PlayniteWebEmulator.Compliance;
 using System;
 using System.IO;
 using System.Linq;
@@ -27,6 +28,7 @@ namespace PlayniteWebEmulator.Tests
             Run("command line parses quoted values supplied by Windows", CommandLineParses);
             Run("command line fails on missing ROM", CommandLineFailsOnMissingRom);
             Run("pipe protocol round trips", PipeProtocolRoundTrips);
+            Run("third-party credits cover every runtime and core", ThirdPartyCreditsCoverEveryRuntimeAndCore);
             Console.WriteLine(failures == 0 ? "All tests passed." : $"{failures} test(s) failed.");
             return failures == 0 ? 0 : 1;
         }
@@ -226,6 +228,35 @@ namespace PlayniteWebEmulator.Tests
                 Equal("emulatorjs.nes", value.ProfileId, "protocol profile");
                 Equal(@"C:\game.nes", value.RomPath, "protocol ROM");
             }
+        }
+
+        private static void ThirdPartyCreditsCoverEveryRuntimeAndCore()
+        {
+            var catalog = new ThirdPartyCreditCatalog();
+            var profiles = new BrowserEmulatorProfileCatalog().Profiles;
+            foreach (var profile in profiles)
+            {
+                True(catalog.CoversComponent(profile.RuntimeId), "missing runtime credit for " + profile.RuntimeId);
+                if (!string.IsNullOrWhiteSpace(profile.CoreId))
+                {
+                    True(catalog.CoversComponent(profile.CoreId), "missing core credit for " + profile.CoreId);
+                }
+            }
+
+            var expected = new[]
+            {
+                "EmulatorJS", "FCEUmm", "Snes9x", "Gambatte", "mGBA", "Mupen64Plus-Next",
+                "PicoDrive", "PCSX-ReARMed", "MAME 2003-Plus", "js-dos", "DOSBox for js-dos",
+                "ScummVM", "scummvm-demo web build"
+            };
+            foreach (var name in expected)
+            {
+                True(catalog.Credits.Any(credit => credit.Name == name), "missing credit for " + name);
+            }
+
+            var text = catalog.BuildDisplayText();
+            True(text.Contains("non-commercial use"), "non-commercial core notice missing");
+            True(text.Contains("supplies no games, ROMs, firmware, or BIOS"), "game-data responsibility notice missing");
         }
 
         private static void Run(string name, Action test)

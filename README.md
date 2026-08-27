@@ -1,67 +1,79 @@
 # Web Emulator for Playnite
 
-Web Emulator is a Playnite generic plugin that makes browser-based emulators
-behave like normal Playnite emulators. It is being built for a no-manual-setup
-flow: install the add-on, choose a compatible Web Emulator profile, and let the
-plugin acquire the required runtime under its own managed data directory.
-
-The repository is private while the first usable version is developed.
+Web Emulator is a Playnite generic add-on that makes browser-based emulators
+behave like ordinary Playnite emulators. Install the add-on, assign a compatible
+Web Emulator profile to a game, and let the plugin acquire the required runtime
+under Playnite's managed extension-data directory.
 
 ## Current status
 
-The first playable vertical slices are available for development testing.
-EmulatorJS profiles launch cartridge and arcade games in the user's default
-browser. js-dos launches installed DOS directories, honoring an explicit
-DOSBox `[autoexec]` launcher when present and asking the user when executable
-selection is ambiguous. ScummVM launches the DOS CD release of Discworld
-through its pinned Tinsel engine. Each implemented runtime is downloaded on
-first use, verified by size and SHA-256, and kept in the plugin's managed data
-directory. Unpinned ScummVM engines deliberately fail fast.
+Version 0.1.0 is a public beta with three playable runtime paths:
 
-Planned launch coverage matches the browser engines already proven in
-MyGamesAnywhere (MGA):
+- **EmulatorJS 4.2.3** for supported cartridge, disc, and MAME 2003-Plus
+  arcade content;
+- **js-dos 8.3.20** for installed DOS directories, including DOSBox
+  `[autoexec]` discovery and user selection when launchers are ambiguous; and
+- **ScummVM WebAssembly** with the pinned Tinsel engine used by Discworld.
 
-| Engine | Playnite platforms |
+The add-on opens each player in the user's default browser, where native
+fullscreen and browser acceleration are available. A tracked helper process and
+loopback-only server preserve Playnite's running state and playtime tracking.
+
+| Runtime | Playnite platforms |
 | --- | --- |
 | EmulatorJS | NES, SNES, Game Boy, Game Boy Color, Game Boy Advance, Nintendo 64, Sega Genesis/Mega Drive, Master System, Game Gear, Sega CD, Sega 32X, PlayStation, Arcade |
 | js-dos | PC (DOS) |
-| ScummVM WebAssembly | PC (DOS) and PC (Windows) ScummVM-compatible game data; Tinsel/Discworld is the first pinned engine |
+| ScummVM WebAssembly | PC (DOS) and PC (Windows); Tinsel/Discworld is the first pinned engine |
 
-Arcade is intentionally implemented through EmulatorJS's MAME 2003-Plus core,
-as in MGA. There is no separate `mame-js` runtime in MGA's current code.
+Arcade uses EmulatorJS's MAME 2003-Plus libretro core. There is no separate
+`mame-js` runtime in MGA's current implementation.
 
-## Design boundaries
+## Runtime and game-data boundaries
 
-- Web Emulator is a Playnite `GenericPlugin`, not a library/source plugin.
-- It registers one managed emulator with ordinary custom Playnite profiles.
-- A small helper process preserves Playnite's normal emulator process tracking.
-- The loaded plugin serves the player on loopback and opens it in the user's
-  default browser, where native fullscreen and browser acceleration work.
-- The helper remains alive while the browser tab reports its session, so
-  Playnite still tracks running state and playtime.
-- Emulator runtimes are acquired per engine, pinned, hash-verified, and stored
-  beneath the plugin's user-data directory.
-- ROMs, game data, firmware, and BIOS files are never supplied by this project.
-- js-dos is run with its cloud and networking features disabled; game files
-  remain on the local loopback session and are not uploaded by this plugin.
-- Runtime-specific save states and RetroAchievements are capabilities, not
-  assumptions; the UI will state what each selected engine supports.
+- The Playnite `.pext` package contains only GreenFuze code, the tracked helper,
+  release metadata, and license/credit documents.
+- Emulator runtimes are downloaded directly from pinned upstream artifacts on
+  first use, verified by size and SHA-256, and stored below Playnite's
+  extension-data directory.
+- EmulatorJS's official 4.2.3 archive is approximately 304 MB and contains its
+  complete stable core set. js-dos and ScummVM are acquired separately.
+- No games, ROMs, copyrighted game data, firmware, or BIOS files are supplied or
+  downloaded by this project.
+- js-dos cloud and networking services are disabled; game files stay in the
+  local loopback session and are not uploaded by this add-on.
+- Save states, persistent saves, and RetroAchievements depend on the selected
+  runtime/core and are not guaranteed by this beta.
 
-See [the first architecture decision](docs/architecture/0001-managed-web-emulator.md)
-and [third-party notices](THIRD_PARTY_NOTICES.md).
+## Credits and licenses
 
-## Build
+Web Emulator is Apache-2.0. The emulator runtimes and cores are independent
+works under their own licenses. In particular, **Snes9x, PicoDrive, and MAME
+2003-Plus are restricted to non-commercial use by their upstream licenses**.
+
+The add-on includes a **Web Emulator → Third-party credits and licenses** menu
+item in Playnite. The complete component list, author credits, source links, and
+license boundaries are also recorded in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Installation is subject to the
+[third-party runtime notice](USER_AGREEMENT.md).
+
+Web Emulator reuses browser-emulation integration ideas from
+[MyGamesAnywhere (MGA)](https://github.com/GreenFuze/MyGamesAnywhere), another
+Apache-2.0 GreenFuze project. No untraceable emulator binary is copied from MGA.
+
+## Build and package
 
 Requirements:
 
 - Windows
 - .NET SDK capable of targeting .NET Framework 4.6.2
 - Playnite 10 SDK (restored from NuGet)
+- Playnite Toolbox for producing a `.pext` package
 
 ```powershell
 dotnet build PlayniteWebEmulator.sln
+dotnet run --project tests/PlayniteWebEmulator.Tests/PlayniteWebEmulator.Tests.csproj
+./build-package.ps1 -ToolboxPath C:\path\to\Toolbox.exe
 ```
 
-The plugin is licensed under Apache-2.0. Third-party emulator runtimes and
-cores retain their own licenses; consult `THIRD_PARTY_NOTICES.md` before
-redistributing a runtime cache.
+See [the architecture decision](docs/architecture/0001-managed-web-emulator.md)
+for the plugin/runtime boundary and security model.

@@ -37,8 +37,10 @@ interprets supported adventure-game data. The user may choose or later change
 the profile in Playnite.
 
 Arcade uses EmulatorJS with the MAME 2003-Plus libretro core. The older
-`mame-js` label is not a separate runtime in current MGA. Its non-commercial
-license is surfaced separately and Arcade remains an optional component.
+`mame-js` label is not a separate runtime in current MGA. The official
+EmulatorJS archive also contains Snes9x and PicoDrive; all three cores have
+non-commercial terms that are surfaced in the catalog agreement, repository
+notices, package notices, and Playnite's third-party credits command.
 
 ## Runtime distribution
 

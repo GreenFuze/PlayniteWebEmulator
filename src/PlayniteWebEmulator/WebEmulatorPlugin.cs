@@ -1,12 +1,14 @@
 using Playnite.SDK;
 using Playnite.SDK.Events;
 using Playnite.SDK.Plugins;
+using PlayniteWebEmulator.Compliance;
 using PlayniteWebEmulator.Emulation;
 using PlayniteWebEmulator.Hosting;
 using PlayniteWebEmulator.Interop;
 using PlayniteWebEmulator.Protocol;
 using PlayniteWebEmulator.Runtime;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace PlayniteWebEmulator
@@ -21,6 +23,7 @@ namespace PlayniteWebEmulator
         private readonly ScummVmRuntimeInstaller scummVmRuntimeInstaller;
         private readonly WebEmulatorSessionRunner sessionRunner;
         private readonly LaunchPipeServer pipeServer;
+        private readonly ThirdPartyCreditCatalog thirdPartyCredits;
 
         public static readonly Guid PluginId = Guid.Parse("41d5bc40-a7e8-46a6-888e-d52cf719c397");
         public override Guid Id => PluginId;
@@ -43,7 +46,21 @@ namespace PlayniteWebEmulator
                 new JsDosLaunchResolver(),
                 new ScummVmEngineResolver());
             pipeServer = new LaunchPipeServer(HandleLaunch);
+            thirdPartyCredits = new ThirdPartyCreditCatalog();
             Properties = new GenericPluginProperties { HasSettings = false };
+        }
+
+        public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
+        {
+            yield return new MainMenuItem
+            {
+                MenuSection = "@Web Emulator",
+                Description = "Third-party credits and licenses",
+                Action = _ => PlayniteApi.Dialogs.ShowSelectableString(
+                    "Web Emulator uses the following independent emulator projects:",
+                    "Web Emulator — third-party credits",
+                    thirdPartyCredits.BuildDisplayText())
+            };
         }
 
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)

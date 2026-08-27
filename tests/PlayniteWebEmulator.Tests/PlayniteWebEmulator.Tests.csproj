@@ -19,6 +19,7 @@
     <Compile Include="..\..\src\PlayniteWebEmulator\Emulation\JsDosLaunchResolver.cs" Link="Emulation\JsDosLaunchResolver.cs" />
     <Compile Include="..\..\src\PlayniteWebEmulator\Runtime\ScummVmRuntimeManifest.cs" Link="Runtime\ScummVmRuntimeManifest.cs" />
     <Compile Include="..\..\src\PlayniteWebEmulator\Runtime\JsDosRuntimeManifest.cs" Link="Runtime\JsDosRuntimeManifest.cs" />
+    <Compile Include="..\..\src\PlayniteWebEmulator\Compliance\ThirdPartyCreditCatalog.cs" Link="Compliance\ThirdPartyCreditCatalog.cs" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
 </Project>
