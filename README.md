@@ -11,10 +11,12 @@ The repository is private while the first usable version is developed.
 
 The first playable vertical slices are available for development testing.
 EmulatorJS profiles launch cartridge and arcade games in the user's default
-browser. ScummVM launches the DOS CD release of Discworld through its pinned
-Tinsel engine. Each implemented runtime is downloaded on first use, verified
-by size and SHA-256, and kept in the plugin's managed data directory. js-dos
-and unpinned ScummVM engines deliberately fail fast.
+browser. js-dos launches installed DOS directories, honoring an explicit
+DOSBox `[autoexec]` launcher when present and asking the user when executable
+selection is ambiguous. ScummVM launches the DOS CD release of Discworld
+through its pinned Tinsel engine. Each implemented runtime is downloaded on
+first use, verified by size and SHA-256, and kept in the plugin's managed data
+directory. Unpinned ScummVM engines deliberately fail fast.
 
 Planned launch coverage matches the browser engines already proven in
 MyGamesAnywhere (MGA):
@@ -40,6 +42,8 @@ as in MGA. There is no separate `mame-js` runtime in MGA's current code.
 - Emulator runtimes are acquired per engine, pinned, hash-verified, and stored
   beneath the plugin's user-data directory.
 - ROMs, game data, firmware, and BIOS files are never supplied by this project.
+- js-dos is run with its cloud and networking features disabled; game files
+  remain on the local loopback session and are not uploaded by this plugin.
 - Runtime-specific save states and RetroAchievements are capabilities, not
   assumptions; the UI will state what each selected engine supports.
 

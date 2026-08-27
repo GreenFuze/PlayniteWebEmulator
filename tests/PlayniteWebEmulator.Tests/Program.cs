@@ -20,6 +20,10 @@ namespace PlayniteWebEmulator.Tests
             Run("player page pins platform controls and local update data", PlayerPagePinsControlsAndLocalData);
             Run("ScummVM Discworld plan is explicit and safe", ScummVmDiscworldPlanIsExplicitAndSafe);
             Run("ScummVM player mounts game data and pinned engine", ScummVmPlayerMountsGameDataAndPinnedEngine);
+            Run("js-dos honors a DOSBox autoexec launcher", JsDosHonorsDosBoxAutoexecLauncher);
+            Run("js-dos asks before ambiguous launch selection", JsDosAsksBeforeAmbiguousLaunchSelection);
+            Run("js-dos player mounts files into a local DOS drive", JsDosPlayerMountsLocalDosDrive);
+            Run("js-dos runtime provenance is pinned", JsDosRuntimeProvenanceIsPinned);
             Run("command line parses quoted values supplied by Windows", CommandLineParses);
             Run("command line fails on missing ROM", CommandLineFailsOnMissingRom);
             Run("pipe protocol round trips", PipeProtocolRoundTrips);
@@ -122,6 +126,93 @@ namespace PlayniteWebEmulator.Tests
         private static void CommandLineFailsOnMissingRom()
         {
             Throws<ArgumentException>(() => LaunchCommandLine.Parse(new[] { "--profile", "emulatorjs.nes" }));
+        }
+
+        private static void JsDosHonorsDosBoxAutoexecLauncher()
+        {
+            var root = CreateTemporaryGameDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(root, "launch.jsdos"), "playnite-web-emulator-jsdos-directory-v1");
+                File.WriteAllText(Path.Combine(root, "bonus.conf"), "[autoexec]\nmount c .\nc:\nGO.BAT\n");
+                File.WriteAllText(Path.Combine(root, "GO.BAT"), "BON.EXE\n");
+                File.WriteAllBytes(Path.Combine(root, "BON.EXE"), new byte[] { 1 });
+                File.WriteAllBytes(Path.Combine(root, "BON-MEM.EXE"), new byte[] { 2 });
+                var plan = new JsDosLaunchResolver().Resolve(Path.Combine(root, "launch.jsdos"));
+                Equal("GO.BAT", plan.LaunchRelativePath, "configured DOS launcher");
+                Equal(4, plan.Files.Count, "DOS game file count");
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+        }
+
+        private static void JsDosAsksBeforeAmbiguousLaunchSelection()
+        {
+            var root = CreateTemporaryGameDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(root, "launch.jsdos"), string.Empty);
+                File.WriteAllBytes(Path.Combine(root, "ALPHA.EXE"), new byte[] { 1 });
+                File.WriteAllBytes(Path.Combine(root, "BETA.COM"), new byte[] { 2 });
+                JsDosLaunchSelectionRequest request = null;
+                var plan = new JsDosLaunchResolver().Resolve(Path.Combine(root, "launch.jsdos"), value =>
+                {
+                    request = value;
+                    return "BETA.COM";
+                });
+                Equal(2, request.Candidates.Count, "DOS launcher choices");
+                Equal("BETA.COM", plan.LaunchRelativePath, "selected DOS launcher");
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+        }
+
+        private static void JsDosPlayerMountsLocalDosDrive()
+        {
+            var root = CreateTemporaryGameDirectory();
+            try
+            {
+                File.WriteAllText(Path.Combine(root, "launch.jsdos"), string.Empty);
+                Directory.CreateDirectory(Path.Combine(root, "BIN"));
+                File.WriteAllBytes(Path.Combine(root, "BIN", "GAME.EXE"), new byte[] { 1, 2, 3 });
+                var plan = new JsDosLaunchPlan(
+                    root,
+                    "BIN/GAME.EXE",
+                    new[] { new JsDosGameFile(root, Path.Combine(root, "BIN", "GAME.EXE")) });
+                var html = JsDosPlayerPage.Build("DOS Game", plan);
+                True(html.Contains("src=\"./runtime/js-dos.js\""), "pinned js-dos script missing");
+                True(html.Contains("pathPrefix:'./runtime/emulators/'"), "local emulator path missing");
+                True(html.Contains("mount c .\\nc:\\ncd BIN\\nGAME.EXE"), "DOS autoexec missing");
+                True(html.Contains("initFs:initFs"), "game filesystem initialization missing");
+                True(html.Contains("noCloud:true"), "js-dos cloud services must be disabled");
+                True(html.Contains("noNetworking:true"), "js-dos networking must be disabled");
+                True(html.Contains("navigator.sendBeacon('./diagnostics?event=closed"), "close tracking missing");
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+        }
+
+        private static void JsDosRuntimeProvenanceIsPinned()
+        {
+            Equal("8.3.20", JsDosRuntimeManifest.Version, "js-dos version");
+            Equal(64, JsDosRuntimeManifest.ArchiveSha256.Length, "archive SHA-256 length");
+            Equal(7, JsDosRuntimeManifest.RequiredFiles.Count, "required runtime file count");
+            True(JsDosRuntimeManifest.SourceNotice.Contains(JsDosRuntimeManifest.SourceCommit), "frontend source commit missing");
+            True(JsDosRuntimeManifest.SourceNotice.Contains(JsDosRuntimeManifest.EmulatorCommit), "emulator source commit missing");
+            True(JsDosRuntimeManifest.SourceNotice.Contains(JsDosRuntimeManifest.DosBoxCommit), "DOSBox source commit missing");
+        }
+
+        private static string CreateTemporaryGameDirectory()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "playnite-web-emulator-test-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            return root;
         }
 
         private static void PipeProtocolRoundTrips()
